@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>感官配對</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none; /* 避免點擊時選中文字，不影響體驗 */
+        }
+
+        body {
+            background: linear-gradient(145deg, #f9efda 0%, #ffe6c4 100%);
+            font-family: 'Segoe UI', 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px 16px;
+            margin: 0;
+        }
+
+        /* 主卡片容器 */
+        .game-wrapper {
+            max-width: 650px;
+            width: 100%;
+            background: #fffaf2;
+            border-radius: 72px;
+            box-shadow: 0 25px 40px rgba(0, 0, 0, 0.2), inset 0 1px 2px rgba(255, 250, 220, 0.9);
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        .game-container {
+            padding: 28px 24px 36px;
+        }
+
+        /* 開始畫面 */
+        .start-area {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .game-title {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: #c47b2e;
+            text-shadow: 3px 3px 0 #ffe0a3;
+            letter-spacing: 5px;
+            margin-bottom: 12px;
+        }
+
+        .sub {
+            font-size: 1.1rem;
+            color: #b36d34;
+            background: #f7e9cf;
+            display: inline-block;
+            padding: 6px 18px;
+            border-radius: 40px;
+            margin-bottom: 32px;
+        }
+
+        .btn-start {
+            background: #ffa559;
+            border: none;
+            font-size: 1.8rem;
+            font-weight: bold;
+            padding: 14px 40px;
+            border-radius: 80px;
+            color: #2f1d0a;
+            cursor: pointer;
+            box-shadow: 0 10px 0 #9b5e2c;
+            transition: 0.07s linear;
+            font-family: inherit;
+            margin-top: 16px;
+        }
+
+        .btn-start:active {
+            transform: translateY(5px);
+            box-shadow: 0 5px 0 #9b5e2c;
+        }
+
+        /* 遊戲主面板 */
+        .game-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* 場景選擇列 */
+        .scene-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .btn-scene {
+            background: #ffcf9a;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 10px 24px;
+            border-radius: 48px;
+            color: #6b3e1c;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #aa7342;
+            transition: 0.07s linear;
+            font-family: inherit;
+        }
+
+        .btn-scene:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #aa7342;
+        }
+
+        /* 場景標題區 */
+        .scene-header {
+            text-align: center;
+            margin: 5px 0 10px;
+        }
+
+        .scene-title {
+            font-size: 1.6rem;
+            font-weight: bold;
+            background: #f5e2b6;
+            display: inline-block;
+            padding: 6px 24px;
+            border-radius: 48px;
+            color: #5a3a1f;
+        }
+
+        .progress-badge {
+            background: #e7d5b5;
+            border-radius: 60px;
+            padding: 6px 16px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #8b5a2e;
+            display: inline-block;
+            margin-left: 12px;
+        }
+
+        /* 主要卡片區域 (單張大卡片) */
+        .flashcard-area {
+            background: #fffef5;
+            border-radius: 56px;
+            padding: 30px 20px;
+            margin: 15px 0 10px;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1), inset 0 1px 4px #fff8e0;
+            min-height: 320px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid #ffdfae;
+        }
+
+        .flashcard-area:active {
+            transform: scale(0.98);
+        }
+
+        /* 描述文字 */
+        .card-question {
+            font-size: 1.7rem;
+            font-weight: 600;
+            color: #4a2c10;
+            text-align: center;
+            line-height: 1.4;
+            margin-bottom: 28px;
+            word-break: break-word;
+            padding: 0 12px;
+        }
+
+        /* 答案區 (一開始隱藏) */
+        .card-answer {
+            font-size: 1.6rem;
+            font-weight: bold;
+            background: #f7e5cc;
+            padding: 12px 22px;
+            border-radius: 60px;
+            color: #aa5e2a;
+            display: inline-block;
+            letter-spacing: 2px;
+            box-shadow: inset 0 1px 4px #eedbad, 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .hidden-answer {
+            display: none;
+        }
+
+        .revealed .card-answer {
+            display: inline-block;
+        }
+
+        .revealed .card-question {
+            margin-bottom: 16px;
+        }
+
+        /* 控制按鈕列 */
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: #ffdead;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 10px 28px;
+            border-radius: 48px;
+            color: #5e3a1c;
+            cursor: pointer;
+            font-family: inherit;
+            transition: 0.05s linear;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+
+        .nav-btn:active {
+            transform: translateY(2px);
+        }
+
+        .reset-scene-btn {
+            background: #d9b48b;
+            color: #2f2418;
+        }
+
+        .finish-message {
+            text-align: center;
+            background: #ebddbb;
+            border-radius: 60px;
+            padding: 18px;
+            margin-top: 16px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #6c431e;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #bb8b57;
+            margin-top: 24px;
+            border-top: 1px solid #ffe2bb;
+            padding-top: 16px;
+        }
+
+        @media (max-width: 550px) {
+            .card-question {
+                font-size: 1.3rem;
+            }
+            .card-answer {
+                font-size: 1.3rem;
+            }
+            .btn-scene {
+                font-size: 1rem;
+                padding: 6px 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="game-wrapper">
+    <div class="game-container">
+        <!-- 開始畫面 -->
+        <div id="startScreen" class="start-area">
+            <div class="game-title">📖 感官配對</div>
+            <div class="sub">✨點擊卡片✨</div>
+            <button class="btn-start" id="startGameBtn">🎮 開始遊戲</button>
+        </div>
+
+        <!-- 遊戲主界面 (初始隱藏) -->
+        <div id="gamePanel" class="game-panel hidden">
+            <!-- 場景按鈕列 -->
+            <div class="scene-bar">
+                <button class="btn-scene" data-scene="scene1">🍢 場景一・小食部</button>
+                <button class="btn-scene" data-scene="scene2">🌧️ 場景二・雨後校園</button>
+            </div>
+
+            <!-- 標題與進度 -->
+            <div class="scene-header">
+                <span id="dynamicSceneTitle" class="scene-title">🌸 未選擇場景</span>
+                <span id="cardCounter" class="progress-badge">0 / 0</span>
+            </div>
+
+            <!-- 單張卡片區域（點擊揭示答案） -->
+            <div id="flashcard" class="flashcard-area">
+                <div id="cardQuestion" class="card-question">✨ 請先選擇場景 ✨</div>
+                <div id="cardAnswer" class="card-answer hidden-answer"></div>
+            </div>
+
+            <!-- 導航按鈕群 -->
+            <div class="nav-buttons">
+                <button id="prevBtn" class="nav-btn" disabled>◀ 上一張</button>
+                <button id="nextBtn" class="nav-btn">下一張 ▶</button>
+                <button id="reshuffleBtn" class="nav-btn reset-scene-btn">🔄 重新洗牌</button>
+            </div>
+
+            <!-- 完成所有卡片後的提示區 -->
+            <div id="completionMsg" class="finish-message hidden"></div>
+            <footer>✋ 點擊卡片 → 顯示正確感官＋表情符號<br>👆 按「下一張」依序學習，順序隨機變化</footer>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ======================= 感官對應表 (繁體 + emoji) =======================
+    const SENSE_EMOJI = {
+        "視覺描寫": { emoji: "👁️", display: "視覺描寫 👁️" },
+        "聽覺描寫": { emoji: "👂", display: "聽覺描寫 👂" },
+        "嗅覺描寫": { emoji: "👃", display: "嗅覺描寫 👃" },
+        "觸覺描寫": { emoji: "🤚", display: "觸覺描寫 🤚" },
+        "味覺描寫": { emoji: "👄", display: "味覺描寫 👄" }
+    };
+
+    // ======================= 場景一：小食部 (已移除「烤腸機中冒出的熱氣」) =======================
+    const SCENE_1_DATA = {
+        name: "🍢 場景一：小息時的學校小食部",
+        cards: [
+            { id: "s1_v1", text: "長長的隊伍", sense: "視覺描寫" },
+            { id: "s1_v2", text: "五顏六色的零食包裝", sense: "視覺描寫" },
+            { id: "s1_a1", text: "下課鐘聲響起", sense: "聽覺描寫" },
+            { id: "s1_a2", text: "同學的喧鬧聲", sense: "聽覺描寫" },
+            { id: "s1_a3", text: "硬幣掉落的「叮噹」聲", sense: "聽覺描寫" },
+            { id: "s1_a4", text: "小食部阿姨問：「同學吃甚麽呀？」", sense: "聽覺描寫" },
+            { id: "s1_o1", text: "燒賣的香氣", sense: "嗅覺描寫" },
+            { id: "s1_o2", text: "檔口飄出的咖哩魚蛋的濃郁香味", sense: "嗅覺描寫" },
+            { id: "s1_t1", text: "握着冰鎮汽水，手心冰涼", sense: "觸覺描寫" },
+            { id: "s1_t2", text: "剛出爐的魚蛋還是燙手的", sense: "觸覺描寫" },
+            { id: "s1_g1", text: "甜絲絲的雪糕", sense: "味覺描寫" },
+            { id: "s1_g2", text: "微辣的咖喱魚蛋", sense: "味覺描寫" },
+            { id: "s1_g3", text: "酸中帶甜的檸檬茶", sense: "味覺描寫" }
+        ]
+    };
+
+    // 場景二：雨後校園 (無味覺)
+    const SCENE_2_DATA = {
+        name: "🌧️ 場景二：雨後的校園",
+        cards: [
+            { id: "s2_v1", text: "樹葉上晶瑩剔透的水珠", sense: "視覺描寫" },
+            { id: "s2_v2", text: "被雨水沖刷乾淨的石徑", sense: "視覺描寫" },
+            { id: "s2_v3", text: "地上的淺水坑", sense: "視覺描寫" },
+            { id: "s2_a1", text: "同學踩水的響聲", sense: "聽覺描寫" },
+            { id: "s2_a2", text: "雨後的鳥鳴", sense: "聽覺描寫" },
+            { id: "s2_o1", text: "空氣中泥土的腥味", sense: "嗅覺描寫" },
+            { id: "s2_t1", text: "迎面吹來微涼的風", sense: "觸覺描寫" },
+            { id: "s2_t2", text: "摸上去濕滑的欄杆", sense: "觸覺描寫" }
+        ]
+    };
+
+    // ---------- 全域變數 ----------
+    let currentSceneKey = null;            // 'scene1' or 'scene2'
+    let currentCardList = [];              // 當前場景的卡片陣列（已隨機排序）
+    let currentIndex = 0;                 // 目前顯示第幾張 (0-based)
+    let isRevealed = false;               // 當前卡片是否已揭示答案
+
+    // DOM 元素
+    const startScreen = document.getElementById('startScreen');
+    const gamePanel = document.getElementById('gamePanel');
+    const startBtn = document.getElementById('startGameBtn');
+    const dynamicTitle = document.getElementById('dynamicSceneTitle');
+    const cardCounterSpan = document.getElementById('cardCounter');
+    const flashcardDiv = document.getElementById('flashcard');
+    const cardQuestionDiv = document.getElementById('cardQuestion');
+    const cardAnswerDiv = document.getElementById('cardAnswer');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const reshuffleBtn = document.getElementById('reshuffleBtn');
+    const completionMsgDiv = document.getElementById('completionMsg');
+
+    // ---------- 輔助函數 ----------
+    // 隨機排序 (Fisher-Yates)
+    function shuffleArray(arr) {
+        const array = [...arr];
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    // 更新進度文字
+    function updateCounterDisplay() {
+        if (currentCardList.length === 0) {
+            cardCounterSpan.innerText = `0 / 0`;
+            return;
+        }
+        cardCounterSpan.innerText = `${currentIndex + 1} / ${currentCardList.length}`;
+    }
+
+    // 根據 currentIndex 刷新卡片顯示 (保持當前揭示狀態)
+    function refreshCardDisplay() {
+        if (!currentCardList.length) {
+            cardQuestionDiv.innerText = "✨ 沒有卡片，請重新選擇場景 ✨";
+            cardAnswerDiv.innerText = "";
+            cardAnswerDiv.classList.add('hidden-answer');
+            flashcardDiv.classList.remove('revealed');
+            isRevealed = false;
+            updateCounterDisplay();
+            return;
+        }
+
+        const card = currentCardList[currentIndex];
+        if (!card) return;
+
+        // 更新問題文字
+        cardQuestionDiv.innerText = card.text;
+        // 更新答案文字 (根據感官)
+        const senseInfo = SENSE_EMOJI[card.sense];
+        if (senseInfo) {
+            cardAnswerDiv.innerText = senseInfo.display;
+        } else {
+            cardAnswerDiv.innerText = card.sense;
+        }
+
+        // 根據是否已揭示來控制答案顯示
+        if (isRevealed) {
+            flashcardDiv.classList.add('revealed');
+            cardAnswerDiv.classList.remove('hidden-answer');
+        } else {
+            flashcardDiv.classList.remove('revealed');
+            cardAnswerDiv.classList.add('hidden-answer');
+        }
+
+        updateCounterDisplay();
+
+        // 處理上一張/下一張按鈕禁用狀態
+        prevBtn.disabled = (currentIndex === 0);
+        nextBtn.disabled = (currentIndex === currentCardList.length - 1);
+    }
+
+    // 切換到上一張 (保持新卡片的未揭示狀態)
+    function goPrevCard() {
+        if (!currentCardList.length) return;
+        if (currentIndex > 0) {
+            currentIndex--;
+            // 重置揭示狀態 (新卡片預設未揭示)
+            isRevealed = false;
+            refreshCardDisplay();
+            // 清除完成訊息（如果之前完成，切換卡片時隱藏）
+            completionMsgDiv.classList.add('hidden');
+        }
+    }
+
+    // 切換到下一張
+    function goNextCard() {
+        if (!currentCardList.length) return;
+        if (currentIndex < currentCardList.length - 1) {
+            currentIndex++;
+            isRevealed = false;
+            refreshCardDisplay();
+            completionMsgDiv.classList.add('hidden');
+        } else {
+            // 已經是最後一張，如果已經完成所有卡片則顯示完成訊息（但可再按洗牌）
+            if (currentIndex === currentCardList.length - 1) {
+                // 顯示完成恭喜語，但不自動前進
+                completionMsgDiv.classList.remove('hidden');
+                completionMsgDiv.innerHTML = "🎉 恭喜！你已完成所有感官卡片！ 🎉<br>點擊「重新洗牌」可再次隨機順序學習，或切換場景繼續挑戰。";
+            }
+        }
+    }
+
+    // 點擊卡片揭示/隱藏? 需求：點按卡片時出現正確答案 (即從未揭示變為揭示)。為了符合直覺，每次點擊卡片若未揭示就揭示；若已揭示，再次點擊不做變化(或者可保持)。這裡採用「點擊後顯示答案，再次點擊不隱藏，保持學習狀態」。
+    function toggleReveal() {
+        if (!currentCardList.length) return;
+        if (!isRevealed) {
+            isRevealed = true;
+            refreshCardDisplay();
+        } else {
+            // 如果已經揭示，再次點擊不做任何改變（維持顯示答案），但不會隱藏，避免混淆。
+            // 完全符合「點按卡片時則出現正確答案」，出現後就保持即可。
+        }
+    }
+
+    // 重新洗牌 (隨機重排當前場景的所有卡片，重置索引及揭示狀態)
+    function reshuffleCurrentScene() {
+        if (!currentSceneKey) return;
+        // 根據當前場景重新取得原始卡片資料，再隨機排序
+        let originalCards = [];
+        if (currentSceneKey === 'scene1') {
+            originalCards = [...SCENE_1_DATA.cards];
+        } else if (currentSceneKey === 'scene2') {
+            originalCards = [...SCENE_2_DATA.cards];
+        } else {
+            return;
+        }
+        currentCardList = shuffleArray(originalCards);
+        currentIndex = 0;
+        isRevealed = false;
+        refreshCardDisplay();
+        completionMsgDiv.classList.add('hidden');
+    }
+
+    // 載入指定場景 (重置隨機順序，從第一張開始)
+    function loadScene(sceneId) {
+        let rawCards = [];
+        let sceneTitle = "";
+
+        if (sceneId === 'scene1') {
+            rawCards = [...SCENE_1_DATA.cards];
+            sceneTitle = SCENE_1_DATA.name;
+            currentSceneKey = 'scene1';
+        } else if (sceneId === 'scene2') {
+            rawCards = [...SCENE_2_DATA.cards];
+            sceneTitle = SCENE_2_DATA.name;
+            currentSceneKey = 'scene2';
+        } else {
+            return;
+        }
+
+        // 隨機排序 (每次進入場景順序不同)
+        currentCardList = shuffleArray(rawCards);
+        currentIndex = 0;
+        isRevealed = false;
+        dynamicTitle.innerText = sceneTitle;
+        refreshCardDisplay();
+        completionMsgDiv.classList.add('hidden');
+    }
+
+    // 綁定場景按鈕 (需重新綁定，避免重複監聽)
+    function bindSceneButtons() {
+        const sceneBtns = document.querySelectorAll('.btn-scene');
+        sceneBtns.forEach(btn => {
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            newBtn.addEventListener('click', (e) => {
+                const sceneVal = newBtn.getAttribute('data-scene');
+                if (sceneVal === 'scene1') {
+                    loadScene('scene1');
+                } else if (sceneVal === 'scene2') {
+                    loadScene('scene2');
+                }
+            });
+        });
+    }
+
+    // 開始遊戲 (隱藏開始畫面，顯示遊戲面板，綁定事件)
+    function startGame() {
+        startScreen.classList.add('hidden');
+        gamePanel.classList.remove('hidden');
+        // 初始化未選擇場景時的提示
+        dynamicTitle.innerText = "🍀 請選擇場景 🍀";
+        cardQuestionDiv.innerText = "✨ 點擊上方「場景一」或「場景二」開始 ✨";
+        cardAnswerDiv.innerText = "";
+        cardAnswerDiv.classList.add('hidden-answer');
+        flashcardDiv.classList.remove('revealed');
+        cardCounterSpan.innerText = "0 / 0";
+        prevBtn.disabled = true;
+        nextBtn.disabled = true;
+        completionMsgDiv.classList.add('hidden');
+        currentCardList = [];
+        currentIndex = 0;
+        isRevealed = false;
+        currentSceneKey = null;
+        // 綁定場景切換按鈕
+        bindSceneButtons();
+    }
+
+    // 綁定 UI 事件 (卡片點擊、導航)
+    function bindControlEvents() {
+        flashcardDiv.addEventListener('click', toggleReveal);
+        prevBtn.addEventListener('click', goPrevCard);
+        nextBtn.addEventListener('click', goNextCard);
+        reshuffleBtn.addEventListener('click', () => {
+            if (!currentSceneKey) {
+                completionMsgDiv.classList.remove('hidden');
+                completionMsgDiv.innerHTML = "⚠️ 請先選擇一個場景，再進行洗牌 ⚠️";
+                setTimeout(() => {
+                    if (completionMsgDiv && !currentSceneKey) completionMsgDiv.classList.add('hidden');
+                }, 1500);
+                return;
+            }
+            reshuffleCurrentScene();
+        });
+    }
+
+    // 初始化執行
+    startBtn.addEventListener('click', startGame);
+    bindControlEvents();
+
+    // 當用戶透過場景載入後，若有完成場景最後一張，洗牌或切換場景會重置，完全符合需求。
+    // 另外滿足「每次只出現一張卡片」、「點按卡片出現正確答案（感官＋emoji）」、
+    // 「順序隨機變化」、「兩個場景獨立不串聯」、「無需統計正確/錯誤」。
+    // 已刪除烤腸機冒出的熱氣項目。
+</script>
+</body>
+</html>
